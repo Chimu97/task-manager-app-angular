@@ -5,13 +5,18 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 
 import { ReactiveFormsModule } from '@angular/forms';
 import { FinishedPipe, GetPipe, TimePipe } from '../pipes';
 import { DynamicPipe } from '../pipes/dynamic.pipe';
+import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
 
 @NgModule({
+  declarations: [
+    ConfirmDialogComponent
+  ],
   imports: [
     CommonModule,
     RouterModule,
@@ -19,8 +24,9 @@ import { DynamicPipe } from '../pipes/dynamic.pipe';
     MatSnackBarModule,
     MatDialogModule,
     MatTooltipModule,
+    MatButtonModule
   ],
-  exports: [MatSnackBarModule, MatDialogModule, MatTooltipModule, ReactiveFormsModule],
+  exports: [MatSnackBarModule, MatDialogModule, MatTooltipModule, ReactiveFormsModule, ConfirmDialogComponent],
   providers: [DynamicPipe, TimePipe, FinishedPipe, GetPipe, DatePipe, DecimalPipe],
 })
 export class SharedModule {}

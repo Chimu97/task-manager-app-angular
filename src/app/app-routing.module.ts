@@ -72,6 +72,7 @@ const routes: Routes = [
     loadChildren: () => import('./pages/authentication/routes').then((m) => m.AUTH_ROUTES),
     canActivateChild: [() => canActivateAuthPage()],
   },
+  { path: 'kanban', loadChildren: () => import('./kanban/kanban.module').then(m => m.KanbanModule) },
   {
     path: '**',
     redirectTo: paths.notFound,

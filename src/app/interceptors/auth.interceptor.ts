@@ -6,7 +6,7 @@ import { ApiEndpoints } from '../util';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private tokenService: TokenService) {}
+  constructor(private tokenService: TokenService) { }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const url = request.url;
@@ -20,9 +20,12 @@ export class AuthInterceptor implements HttpInterceptor {
 
   cloneWithToken(request: HttpRequest<unknown>): HttpRequest<unknown> {
     const token = this.tokenService.authToken;
+    if (!token) return request; // No modifica si no hay token
 
     return request.clone({
       headers: request.headers.set('Authorization', `Bearer ${token}`),
     });
   }
+
+
 }

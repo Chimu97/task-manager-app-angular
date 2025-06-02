@@ -32,8 +32,18 @@ export class LoginComponent implements OnInit {
       ? LoginFormGroup.toEntityWithEmail(form.controls)
       : LoginFormGroup.toEntityWithUserName(form.controls);
 
-    await this.service.login(login);
+    try {
+      const response = await this.service.login(login); // ← ya es una Promise
 
-    this.toaster.success('Login successful!');
+      if (response?.token) {
+        localStorage.setItem('token', response.token);
+        this.toaster.success('Login successful!');
+        window.location.href = '/dashboard'; // o Router si lo estás usando
+      } else {
+        this.toaster.error('Login failed: Token not received');
+      }
+    } catch (error) {
+      this.toaster.error('Invalid username or password');
+    }
   }
 }

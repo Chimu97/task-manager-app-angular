@@ -107,11 +107,10 @@ export class AuthService implements OnDestroy {
     PubSubUtil.unsub(this.subscriptions);
   }
 
-  retrieveTokenFromStore(): void {
-    const token = this.store.get<string>(this.accessTokenKey);
-
-    this.handleAuthResult(token);
-  }
+retrieveTokenFromStore(): void {
+  const token = this.store.get<string>(this.accessTokenKey);
+  this.handleAuthResult(token);
+}
 
   private initSubscriptions() {
     const setAuthDataSub = this.setAuthData$.subscribe();

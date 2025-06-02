@@ -29,8 +29,12 @@ export class SignupComponent implements OnInit {
   async signup(form: SignupFormGroup): Promise<void> {
     const signup = SignupFormGroup.toJson(form);
 
-    await this.service.signup(signup);
-
-    this.toaster.success('Sign up successful!');
+    try {
+      await this.service.signup(signup);
+      this.toaster.success('Registro exitoso!');
+    } catch (error: any) {
+      this.toaster.error(error?.error?.message || 'No se pudo registrar el usuario');
+    }
   }
+
 }

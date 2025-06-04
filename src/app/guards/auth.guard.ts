@@ -1,48 +1,70 @@
 import { inject } from '@angular/core';
 import { Router, UrlTree } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { paths } from '../util';
 import { ToastService } from '../services/toast.service';
+import { paths } from '../util';
+import { map, take } from 'rxjs/operators';
 
-// ✅ Guard para usuarios autenticados
-export const canActivateAuth = async (
-  service = inject(AuthService)
-): Promise<boolean | UrlTree> => {
+export const canActivateAuth = (): Promise<boolean | UrlTree> => {
+  const service = inject(AuthService);
   const router = inject(Router);
   const toaster = inject(ToastService);
 
-  service.retrieveTokenFromStore();
+  return new Promise((resolve) => {
+    service.setAuthData$.pipe(take(1)).subscribe((authData) => {
+      console.log('[Guard] canActivateAuth:', authData);
 
-  if (service.isLoggedIn) return true;
-
-  toaster.info('Login to access other pages');
-  return router.parseUrl(paths.login);
+      if (authData?.isValid) {
+        resolve(true);
+      } else {
+        toaster.info('Login to access other pages');
+        resolve(router.parseUrl(paths.login));
+      }
+    });
+  });
 };
 
-// ✅ Guard para administradores
-export const canActivateAuthAdmin = async (
-  service = inject(AuthService)
-): Promise<boolean | UrlTree> => {
+
+export const canActivateAuthAdmin = (): Promise<boolean | UrlTree> => {
+  const service = inject(AuthService);
   const router = inject(Router);
   const toaster = inject(ToastService);
 
-  service.retrieveTokenFromStore();
+  return new Promise((resolve) => {
+    service.setAuthData$.pipe(take(1)).subscribe((authData) => {
+      console.log('[Guard] canActivateAuthAdmin:', authData);
 
-  if (service.isAdmin) return true;
+      const isAdmin =
+        authData?.decodedToken?.role === 'Admin' ||
+        authData?.decodedToken?.roles?.includes('Admin');
 
-  toaster.warning('You do not have permission to access this page');
-  return router.parseUrl(paths.home);
+      if (authData?.isValid && isAdmin) {
+        resolve(true);
+      } else {
+        toaster.warning('You do not have permission to access this page');
+        resolve(router.parseUrl(paths.home));
+      }
+    });
+  });
 };
 
-// ✅ Guard para evitar acceder a login si ya estás logueado
-export const canActivateAuthPage = (
-  service = inject(AuthService)
-): true | UrlTree => {
+
+export const canActivateAuthPage = (): Promise<boolean | UrlTree> => {
+  const service = inject(AuthService);
   const router = inject(Router);
   const toaster = inject(ToastService);
 
-  if (!service.isLoggedIn) return true;
+  return new Promise((resolve) => {
+    service.setAuthData$.pipe(take(1)).subscribe((authData) => {
+      console.log('[Guard] canActivateAuthPage:', authData);
 
-  toaster.info('You are already logged in! Logout if you want to enter with another account.');
-  return router.parseUrl(paths.home);
+      if (!authData?.isValid) {
+        resolve(true);
+      } else {
+        toaster.info('You are already logged in! Logout if you want to enter with another account.');
+        resolve(router.parseUrl(paths.home));
+      }
+    });
+  });
 };
+

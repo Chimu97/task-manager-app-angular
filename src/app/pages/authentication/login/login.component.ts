@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services';
 import { StringUtil } from 'src/app/util';
 import { LoginFormComponent } from '../components';
@@ -16,6 +17,7 @@ import { ToastService } from 'src/app/services/toast.service';
 export class LoginComponent implements OnInit {
   private service = inject(AuthService);
   private toaster = inject(ToastService);
+  private router = inject(Router); // ✅ Agregado Router
 
   form!: LoginFormGroup;
 
@@ -33,12 +35,12 @@ export class LoginComponent implements OnInit {
       : LoginFormGroup.toEntityWithUserName(form.controls);
 
     try {
-      const response = await this.service.login(login); // ← ya es una Promise
+      const response = await this.service.login(login);
 
       if (response?.token) {
         localStorage.setItem('token', response.token);
         this.toaster.success('Login successful!');
-        window.location.href = '/dashboard'; // o Router si lo estás usando
+        await this.router.navigate(['/home']); // ✅ Redirige correctamente usando Angular Router
       } else {
         this.toaster.error('Login failed: Token not received');
       }

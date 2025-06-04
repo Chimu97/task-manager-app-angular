@@ -38,7 +38,12 @@ export class MainHeaderComponent implements OnInit {
 
   ngOnInit(): void {
     this.setLoggedUser$ = this.authService.loggedUser$;
+
+    this.setLoggedUser$.subscribe((user) => {
+      console.log('[HEADER] Logged user:', user);
+    });
   }
+
 
   logout(): void {
     const ref = this.modalService.confirmation(logoutModalData());
@@ -46,7 +51,7 @@ export class MainHeaderComponent implements OnInit {
     ref.afterClosed().subscribe((result) => {
       if (!result) return;
 
-      this.authService.logout();
+      this.authService.logout(); 
     });
   }
 }

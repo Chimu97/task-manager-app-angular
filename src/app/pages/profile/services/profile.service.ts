@@ -128,10 +128,18 @@ export class ProfileService extends FormService<Profile> implements OnDestroy {
   };
 
   reloadUserProfiles = async (): Promise<void> => {
-    const res = await this.api.getUserProfiles();
+    const current = this._activeProfiles$.getValue();
 
+    if (!ArrayUtil.isEmpty(current)) {
+      console.log('[PROFILE] Active profiles ya están cargados, se evita duplicado.');
+      return;
+    }
+
+    console.log('[PROFILE] Cargando perfiles del usuario...');
+    const res = await this.api.getUserProfiles();
     this._activeProfiles$.next(res);
   };
+
 
   hasUserProfiles = (): boolean => {
     const profiles = this._activeProfiles$.getValue();

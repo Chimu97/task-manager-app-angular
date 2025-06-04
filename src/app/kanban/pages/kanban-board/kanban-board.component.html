@@ -5,12 +5,8 @@
   </button>
 
   <div *ngIf="showGlobalTaskInput" class="new-task-input">
-    <input
-      #taskInput
-      [(ngModel)]="globalNewTaskTitle"
-      placeholder="Título de la nueva tarea"
-      (keydown.enter)="addGlobalTask()"
-    />
+    <input #taskInput [(ngModel)]="globalNewTaskTitle" placeholder="Título de la nueva tarea"
+      (keydown.enter)="addGlobalTask()" />
     <button (click)="addGlobalTask()">Agregar</button>
     <button (click)="cancelGlobalTask()">Cancelar</button>
   </div>
@@ -21,23 +17,27 @@
   <div class="column" *ngFor="let column of columns; let colIndex = index">
     <h3>{{ column.title }}</h3>
 
-    <div
-      cdkDropList
-      [id]="'column-' + colIndex"
-      [cdkDropListData]="column.tasks"
-      [cdkDropListConnectedTo]="connectedDropLists"
-      class="task-list"
-      (cdkDropListDropped)="drop($event)"
-    >
-      <div
-        class="task-card"
-        *ngFor="let task of column.tasks; let taskIndex = index"
-        cdkDrag
-      >
-        {{ task.title }}
-        <button class="delete-btn" (click)="deleteTask(colIndex, taskIndex)">✖</button>
-      </div>
-    </div>
+    <div cdkDropList [id]="'column-' + colIndex" [cdkDropListData]="column.tasks"
+      [cdkDropListConnectedTo]="connectedDropLists" class="task-list"
+      (cdkDropListDropped)="drop($event, column.status)">
+      <ng-container *ngIf="column.tasks.length > 0; else emptyColumn">
+        <div class="task-card" *ngFor="let task of column.tasks; let taskIndex = index" cdkDrag
+          (click)="editTask(colIndex, taskIndex)">
+          <div class="task-main">
+            <div class="task-title">{{ task.title }}</div>
+            <div class="task-id">{{ task.id }}</div>
+          </div>
+          <div class="task-meta" *ngIf="task.assignedTo">
+            <span class="task-tag">{{ task.assignedTo }}</span>
+          </div>
+        </div>
+      </ng-container>
 
+      <ng-template #emptyColumn>
+        <div class="empty-placeholder">
+          Suelta aquí para mover una tarea
+        </div>
+      </ng-template>
+    </div>
   </div>
 </div>

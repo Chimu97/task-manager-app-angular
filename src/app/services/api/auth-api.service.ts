@@ -20,7 +20,7 @@ export class AuthApiService {
     return this.authResponseSet.asObservable();
   }
 
-  constructor(private api: ApiService, private userApi: UserApiService) {}
+  constructor(private api: ApiService, private userApi: UserApiService) { }
 
   async login(data: Login): Promise<AuthResponse> {
     return this.api.insert(this.createAuthApiRequest('login', ElementIds.LoginSubmit, data));

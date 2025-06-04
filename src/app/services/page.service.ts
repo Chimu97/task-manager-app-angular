@@ -10,7 +10,11 @@ import { filter } from 'rxjs';
 export class PageService {
   constructor(private router: Router, private activatedRoute: ActivatedRoute) {}
 
-  goToHome = () => this.router.navigate([paths.home]);
+  goToHome = () => {
+  console.log('[PAGE SERVICE] Navigating to HOME:', paths.home);
+  return this.router.navigate([paths.home]);
+};
+
   goToLogin = () => this.router.navigate([paths.login]);
 
   getParam = (param: string) => this.getUrlTree().queryParams[param];

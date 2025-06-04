@@ -1,32 +1,26 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface TaskItem {
-  id?: number;
-  title: string;
-  status: string;
-  time?: number;
-  rating?: number;
-  comment?: string;
-  createdAt?: Date;
-}
+import { HttpClient } from '@angular/common/http';
+import { KanbanTaskItem } from 'src/app/models/entities/kanban-task-item';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskService {
-  private apiUrl = 'https://localhost:5001/api/taskitems'; // ⚠️ ajustá si usás otro puerto/backend
+  private apiUrl = 'http://localhost:5108/api/tasks'; // Cambiado al nuevo backend
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-getTasks(): Observable<TaskItem[]> {
-  return this.http.get<TaskItem[]>('https://localhost:5001/api/taskitems/odata');
-}
+  getTasks(): Observable<KanbanTaskItem[]> {
+    return this.http.get<KanbanTaskItem[]>(`${this.apiUrl}/kanban`);
+  }
 
+  updateTask(task: KanbanTaskItem): Observable<KanbanTaskItem> {
+    return this.http.put<KanbanTaskItem>(`${this.apiUrl}/${task.id}`, task);
+  }
 
-  createTask(task: TaskItem): Observable<any> {
-    return this.http.post(this.apiUrl, task);
+  createTask(task: KanbanTaskItem): Observable<KanbanTaskItem> {
+    return this.http.post<KanbanTaskItem>(this.apiUrl, task);
   }
 
   deleteTask(id: number): Observable<any> {

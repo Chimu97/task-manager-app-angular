@@ -37,6 +37,15 @@ const homeCards: Card[] = [
     url: Pages.Faqs,
     image: imgConfig('/assets/icons/material-contact-support.svg'),
   },
+  {
+    id: 'cCardKanban',
+    title: 'Kanban',
+    content: 'Organize your tasks visually in Kanban view',
+    url: '/kanban',
+    image: imgConfig('/assets/icons/material-view-kanban.svg'), // Asegurate que el ícono exista
+  },
+
+
 ];
 
 export { homeCards };

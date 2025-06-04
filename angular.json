@@ -74,7 +74,8 @@
               "browserTarget": "tma-spa:build:production"
             },
             "development": {
-              "browserTarget": "tma-spa:build:development"
+              "browserTarget": "tma-spa:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

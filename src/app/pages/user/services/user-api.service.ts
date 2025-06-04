@@ -17,7 +17,7 @@ export class UserApiService implements FormApiService<User> {
   private url = QueryUtil.buildApiUrl(ApiEndpoints.Users);
   private rolesUrl = QueryUtil.buildApiUrl(ApiEndpoints.Roles);
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService) { }
 
   async getQuery(options: ODataOptions): Promise<User[]> {
     const queryUrl = QueryUtil.buildODataQuery(this.url, options);
@@ -40,13 +40,10 @@ export class UserApiService implements FormApiService<User> {
   }
 
   async getByEmail(email: string): Promise<User> {
-    const queryUrl = QueryUtil.buildODataQuery(this.url, {
-      filter: { email },
-    });
+    const url = `/api/profiles/by-email?email=${encodeURIComponent(email)}`;
 
     return this.api.get<User>({
-      ...ApiRequest.get<User>(queryUrl, User),
-      mapFn: (res: User[]) => res?.[0],
+      ...ApiRequest.get<User>(url, User),
       customData: {
         loadings: LoadingService.createManyFromIds([ElementIds.UserForm, ElementIds.HeaderUser]),
       },

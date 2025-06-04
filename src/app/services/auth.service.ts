@@ -35,7 +35,6 @@ export class AuthService implements OnDestroy {
 
   private _setAuthData = new BehaviorSubject<AuthData | null | undefined>(undefined);
   private _loggedUser = new BehaviorSubject<UserAuthGet | null | undefined>(undefined);
-
   private _authData: AuthData | null = null;
 
   private subscriptions: Subscription[] = [];
@@ -43,6 +42,7 @@ export class AuthService implements OnDestroy {
   get authToken(): string | undefined {
     return this._authData?.token;
   }
+
   get setAuthData$(): Observable<AuthData | null | undefined> {
     return this._setAuthData.asObservable().pipe(
       map((authData) => {
@@ -52,12 +52,17 @@ export class AuthService implements OnDestroy {
         if (authData === undefined) return;
 
         this._authData = authData;
-
         const loggedIn = this.isLoggedIn;
 
         if (authData != null && loggedIn) {
           this.store.store<string>({ key: this.accessTokenKey, value: authData.token });
-          this.profileService.reloadUserProfiles();
+
+          if (!this.profileService.hasUserProfiles()) {
+            console.log('[AUTH] Perfiles aún no cargados. Se procede a cargar.');
+            this.profileService.reloadUserProfiles();
+          } else {
+            console.log('[AUTH] Perfiles ya estaban cargados. Se evita recarga.');
+          }
         } else {
           this.app.activateClearSessionState();
         }
@@ -78,15 +83,17 @@ export class AuthService implements OnDestroy {
     return !!this._authData?.isValid;
   }
 
+  readonly isLoggedIn$ = this.setAuthData$.pipe(
+    map((authData) => !!authData?.isValid)
+  );
+
   get isAdmin(): boolean {
     return this.currentUserRoles.includes(UserRoles.Admin);
   }
 
   get currentUserRoles(): string[] {
     const decodedToken = this._authData?.decodedToken;
-
     if (decodedToken?.role) return [decodedToken.role];
-
     return decodedToken?.roles ?? [];
   }
 
@@ -107,21 +114,21 @@ export class AuthService implements OnDestroy {
     PubSubUtil.unsub(this.subscriptions);
   }
 
-retrieveTokenFromStore(): void {
-  const token = this.store.get<string>(this.accessTokenKey);
-  this.handleAuthResult(token);
-}
+  retrieveTokenFromStore(): void {
+    const token = this.store.get<string>(this.accessTokenKey);
+    this.handleAuthResult(token);
+  }
 
   private initSubscriptions() {
     const setAuthDataSub = this.setAuthData$.subscribe();
     const setAuthResponseSub = this.authResponse$.subscribe();
-
     PubSubUtil.unsub(this.subscriptions);
     this.subscriptions = [setAuthDataSub, setAuthResponseSub];
   }
 
   async login(data: Login): Promise<AuthResponse> {
     const res = await this.api.login(data);
+    console.log('[LOGIN] Success:', res);
     this.pageService.goToHome();
     return res;
   }
@@ -141,7 +148,6 @@ retrieveTokenFromStore(): void {
 
   hasRoles(roles: string[] | undefined): boolean {
     if (!roles) return true;
-
     return roles.every((role) => this.currentUserRoles.includes(role));
   }
 
@@ -153,16 +159,22 @@ retrieveTokenFromStore(): void {
 
   private handleAuthResult(token: string | null | undefined, user?: UserAuthGet | null): void {
     const decodedToken = this.decodeAuthToken(token ?? '');
+    console.log('[AUTH RESULT] Decoded token:', decodedToken);
+    console.log('[AUTH RESULT] user:', user);
+    console.log('[AUTH RESULT] token:', token);
+
     if (!decodedToken) {
       this.emptyAuthData();
-
       return;
     }
 
-    if (user == null) {
+    if (user) {
+      this._loggedUser.next(user);
+    } else if (!this._loggedUser.getValue()) {
+      console.log('[AUTH] No user aún, se procede a fetch.');
       this.fetchUser(decodedToken.email);
     } else {
-      this._loggedUser.next(user);
+      console.log('[AUTH] Usuario ya está presente. No se vuelve a pedir.');
     }
 
     this.setAuthData(AuthData.fromToken(token as string, decodedToken));
@@ -174,12 +186,12 @@ retrieveTokenFromStore(): void {
 
   async refreshLoggedUser(email?: string) {
     const emailToFetch = email || this._loggedUser.getValue()?.email;
-
     this.fetchUser(emailToFetch ?? '');
   }
 
   private async fetchUser(email: string): Promise<void> {
     if (!email) return;
+    console.log('[FETCH USER]', email);
 
     try {
       const newUser = await this.api.getUserByEmail(email);
@@ -195,7 +207,6 @@ retrieveTokenFromStore(): void {
 
   private decodeAuthToken(token: string): DecodedAuthToken | null {
     if (!token) return null;
-
     return this.tokenService.decode(token);
   }
 }

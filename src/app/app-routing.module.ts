@@ -28,12 +28,12 @@ const routes: Routes = [
       {
         path: Pages.Profiles,
         loadChildren: () => import('./pages/profile/routes').then((m) => m.PROFILE_ROUTES),
-        canActivate: [ canActivateAuth],
+        canActivate: [canActivateAuth],
       },
       {
         path: Pages.PresetTaskItems,
         loadChildren: () => import('./pages/profile/routes').then((m) => m.PRESET_TASK_ITEM_ROUTES),
-        canActivate: [ canActivateAuth],
+        canActivate: [canActivateAuth],
       },
       {
         path: Pages.Users,
@@ -56,6 +56,11 @@ const routes: Routes = [
         canActivate: [canActivateAuth],
       },
       {
+        path: 'kanban',
+        loadChildren: () => import('./kanban/kanban.module').then((m) => m.KanbanModule),
+        canActivate: [canActivateAuth],
+      },
+      {
         path: Pages.NotFound,
         loadComponent: () =>
           import('./pages/not-found/not-found.component').then((m) => m.NotFoundComponent),
@@ -72,7 +77,6 @@ const routes: Routes = [
     loadChildren: () => import('./pages/authentication/routes').then((m) => m.AUTH_ROUTES),
     canActivateChild: [canActivateAuthPage],
   },
-  { path: 'kanban', loadChildren: () => import('./kanban/kanban.module').then(m => m.KanbanModule) },
   {
     path: '**',
     redirectTo: paths.notFound,

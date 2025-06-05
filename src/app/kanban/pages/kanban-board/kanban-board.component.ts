@@ -147,68 +147,34 @@ export class KanbanBoardComponent implements OnInit {
     });
   }
 
-  startVisualTimer(task: KanbanTaskItem): void {
-    console.log(`🔁 [startVisualTimer] Inicializando timer para ID: ${task.id}`);
+startVisualTimer(task: KanbanTaskItem): void {
+  const taskId = task.id!; // <-- <- esta es la clave
+  console.log(`🔁 [startVisualTimer] Inicializando timer para ID: ${taskId}`);
 
-    if (this.taskTimers[task.id!]) {
-      console.warn(`⛔ Timer ya existe para tarea ${task.id}, abortando`);
-      delete this.taskTimers[task.id!];
+  let seconds = this.parseTimeToSeconds(task.actualTimeWorked);
+
+  // Limpiar timer previo si existe
+  if (this.taskTimers[taskId]) {
+    clearInterval(this.taskTimers[taskId]);
+  }
+
+  this.taskTimers[taskId] = setInterval(() => {
+    seconds += 1;
+    const formatted = this.formatSecondsToHHMMSS(seconds);
+
+    for (let col of this.columns) {
+      const t = col.tasks.find(t => t.id === taskId);
+      if (t) {
+        t.actualTimeWorked = formatted;
+      }
     }
 
-
-const initialWorkedSeconds = this.parseTimeToSeconds(task.actualTimeWorked);
-let startedAtTimestamp: number;
-
-if (typeof task.timerStartedAt === 'string') {
-  startedAtTimestamp = new Date(task.timerStartedAt).getTime(); // ✅ CORRECTO
-} else if (task.timerStartedAt && Object.prototype.toString.call(task.timerStartedAt) === '[object Date]') {
-  startedAtTimestamp = (task.timerStartedAt as Date).getTime();
-} else {
-  startedAtTimestamp = Date.now();
+    console.log(`⌛ [${taskId}] actualTimeWorked = ${formatted}`);
+    this.cdr.markForCheck();
+  }, 1000);
 }
 
-console.log('⏱ Calculando desde:', {
-  actualTimeWorked: task.actualTimeWorked,
-  parsedSeconds: initialWorkedSeconds,
-  timerStartedAt: task.timerStartedAt,
-  parsedTimestamp: startedAtTimestamp,
-  now: Date.now(),
-  diffSeconds: (Date.now() - startedAtTimestamp) / 1000
-});
 
-
-    this.taskTimers[task.id!] = setInterval(() => {
-      console.log(`⏱ Tick para ID: ${task.id}`);
-
-      const now = Date.now();
-      let elapsed = Math.floor((now - startedAtTimestamp) / 1000);
-      if (elapsed < 0) {
-        console.warn(`⚠️ TimerStartedAt en el futuro para task ${task.id}, corrigiendo`);
-        startedAtTimestamp = Date.now();
-        elapsed = 0;
-      }
-
-
-      const totalSeconds = initialWorkedSeconds + elapsed;
-
-      // 🔍 Log interno de cálculo dinámico
-      console.log(`🧮 Elapsed = ${elapsed}, totalSeconds = ${totalSeconds}`);
-
-      const updatedTime = this.formatSecondsToHHMMSS(totalSeconds);
-
-      console.log(`⌛ Nuevo tiempo para ID ${task.id}: ${updatedTime}`);
-
-      for (let col of this.columns) {
-        const t = col.tasks.find(t => t.id === task.id);
-        if (t) {
-          t.actualTimeWorked = updatedTime;
-          console.log(`🟢 actualTimeWorked actualizado en UI para ID ${task.id}: ${t.actualTimeWorked}`);
-        }
-      }
-
-      this.cdr.detectChanges();
-    }, 1000);
-  }
 
   stopVisualTimer(taskId: number): void {
     if (this.taskTimers[taskId]) {

@@ -248,4 +248,8 @@ export class ProfileService extends FormService<Profile> implements OnDestroy {
       duplicateSuccess: 'Profile duplicated successfully!',
     };
   };
+
+  getAllUsers(): Observable<{ id: number; userName: string }[]> {
+    return this.api.getAllUsers();
+  }
 }

@@ -25,4 +25,23 @@ export class TokenService {
 
     return token != null ? this.decoderFn(token) : null;
   }
+
+  getUserId(): number {
+  if (!this._authToken) return 0;
+
+  const decoded: any = this.decoderFn(this._authToken);
+  return decoded?.UserId ? +decoded.UserId : 0;
+}
+
+getRoles(): string[] {
+  if (!this._authToken) return [];
+
+  const decoded: any = this.decoderFn(this._authToken);
+  const raw = decoded?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
+  if (!raw) return [];
+
+  return typeof raw === 'string' ? [raw] : raw;
+}
+
 }

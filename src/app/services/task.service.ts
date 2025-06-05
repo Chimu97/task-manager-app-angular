@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { KanbanTaskItem } from 'src/app/models/entities/kanban-task-item';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,14 @@ export class TaskService {
   constructor(private http: HttpClient) { }
 
   getTasks(): Observable<KanbanTaskItem[]> {
-    return this.http.get<KanbanTaskItem[]>(`${this.apiUrl}/kanban`);
+    return this.http.get<any[]>(`${this.apiUrl}/kanban`).pipe(
+      map((tasks: any[]) =>
+        tasks.map(task => ({
+          ...task,
+          assignedTo: task.assignedUser?.userName || ''
+        }))
+      )
+    );
   }
 
   updateTask(task: KanbanTaskItem): Observable<KanbanTaskItem> {
@@ -25,5 +33,9 @@ export class TaskService {
 
   deleteTask(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  toggleTimer(taskId: number): Observable<KanbanTaskItem> {
+    return this.http.patch<KanbanTaskItem>(`/api/tasks/${taskId}/toggle-timer`, {});
   }
 }

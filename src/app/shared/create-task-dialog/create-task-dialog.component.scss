@@ -1,0 +1,30 @@
+.dialog-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding-top: 1rem;
+
+  .dialog-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+.dialog-actions {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-top: 1px solid #ccc;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

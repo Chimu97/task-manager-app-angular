@@ -13,6 +13,8 @@ import { LoadingService } from 'src/app/services';
 import { ApiService } from 'src/app/services/api/api.service';
 import { FormApiService } from 'src/app/services/interfaces';
 import { ApiEndpoints, ElementIds, QueryUtil } from 'src/app/util';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +22,9 @@ import { ApiEndpoints, ElementIds, QueryUtil } from 'src/app/util';
 export class ProfileApiService implements FormApiService<Profile> {
   private url = QueryUtil.buildApiUrl(ApiEndpoints.Profiles);
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService,
+    private http: HttpClient
+  ) { }
 
   async getById(id: number): Promise<Profile> {
     const res = await this.api.getById<Profile>({
@@ -71,4 +75,9 @@ export class ProfileApiService implements FormApiService<Profile> {
       ...ApiRequest.delete(this.url, id),
       customData: { loadings: LoadingService.createManyFromId(ElementIds.ProfileDelete) },
     });
+
+  getAllUsers(): Observable<{ id: number; userName: string }[]> {
+    return this.http.get<{ id: number; userName: string }[]>('/api/profiles/all');
+  }
+
 }

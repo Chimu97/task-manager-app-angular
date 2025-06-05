@@ -1,15 +1,8 @@
-<!-- Formulario global para agregar tarea -->
+<!-- Botón para crear tarea (ahora abre modal) -->
 <div class="new-task-form">
-  <button *ngIf="!showGlobalTaskInput" (click)="openTaskInput()">
+  <button (click)="openCreateTaskDialog()">
     + Nueva Tarea
   </button>
-
-  <div *ngIf="showGlobalTaskInput" class="new-task-input">
-    <input #taskInput [(ngModel)]="globalNewTaskTitle" placeholder="Título de la nueva tarea"
-      (keydown.enter)="addGlobalTask()" />
-    <button (click)="addGlobalTask()">Agregar</button>
-    <button (click)="cancelGlobalTask()">Cancelar</button>
-  </div>
 </div>
 
 <!-- Contenedor principal del tablero Kanban -->
@@ -25,8 +18,25 @@
           (click)="editTask(colIndex, taskIndex)">
           <div class="task-main">
             <div class="task-title">{{ task.title }}</div>
-            <div class="task-id">{{ task.id }}</div>
+            <div class="task-id">#{{ task.id }}</div>
           </div>
+
+          <div class="task-times">
+            <small>🕒 Estimado: {{ task.estimatedTime }}</small><br />
+            <small>⏱ Trabajado: {{ task.actualTimeWorked }}</small>
+          </div>
+
+          <div class="task-timer-status" *ngIf="task.status === 'InProgress'">
+            <small *ngIf="task.isTimerRunning">⏱️ En progreso</small>
+            <small *ngIf="!task.isTimerRunning">⏸️ Pausado</small>
+          </div>
+
+          <div class="task-timer-controls" *ngIf="task.status === 'InProgress'">
+            <button (click)="onToggleTimer(task, $event)">
+              {{ task.isTimerRunning ? '⏸️ Pausar' : '▶️ Reanudar' }}
+            </button>
+          </div>
+
           <div class="task-meta" *ngIf="task.assignedTo">
             <span class="task-tag">{{ task.assignedTo }}</span>
           </div>

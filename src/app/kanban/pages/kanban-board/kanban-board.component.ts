@@ -49,27 +49,32 @@ export class KanbanBoardComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('KANBAN INIT');
-    this.connectedDropLists = this.columns.map((_, index) => `column-${index}`);
-    this.taskService.getTasks().subscribe((tasks: KanbanTaskItem[]) => {
-      console.log('TAREAS:', tasks);
 
+    this.taskService.getTasks().subscribe((tasks: KanbanTaskItem[]) => {
+      console.log('📦 Tareas recibidas del backend:', tasks);
+
+      // Reasignar columnas correctamente
       this.columns = this.columns.map(column => ({
         ...column,
         tasks: tasks.filter(task => task.status === column.status)
       }));
 
-      tasks.forEach(task => {
-        if (task.status === 'InProgress' && task.isTimerRunning) {
-          console.log('▶️ TAREA PARA TIMER:', {
-            id: task.id,
-            title: task.title,
-            actualTimeWorked: task.actualTimeWorked,
-            timerStartedAt: task.timerStartedAt
-          });
-          this.startVisualTimer(task);
-        }
-      });
+      this.connectedDropLists = this.columns.map((_, index) => `column-${index}`);
 
+      // Esperar a que las columnas estén correctamente asignadas
+      setTimeout(() => {
+        for (const task of tasks) {
+          if (task.status === 'InProgress' && task.isTimerRunning) {
+            console.log('▶️ TAREA PARA TIMER:', {
+              id: task.id,
+              title: task.title,
+              actualTimeWorked: task.actualTimeWorked,
+              timerStartedAt: task.timerStartedAt
+            });
+            this.startVisualTimer(task);
+          }
+        }
+      }, 500); // breve delay para asegurar sincronización visual
 
       this.cdr.detectChanges();
     });
@@ -143,34 +148,67 @@ export class KanbanBoardComponent implements OnInit {
   }
 
   startVisualTimer(task: KanbanTaskItem): void {
-    if (this.taskTimers[task.id!]) return;
+    console.log(`🔁 [startVisualTimer] Inicializando timer para ID: ${task.id}`);
 
-    const initialWorkedSeconds = this.parseTimeToSeconds(task.actualTimeWorked);
-    const startedAtTimestamp = task.timerStartedAt
-      ? Date.parse(task.timerStartedAt + '') // fuerza interpretación como UTC string
-      : Date.now();
+    if (this.taskTimers[task.id!]) {
+      console.warn(`⛔ Timer ya existe para tarea ${task.id}, abortando`);
+      delete this.taskTimers[task.id!];
+    }
 
-      console.log('⏱ Initial seconds:', initialWorkedSeconds);
-console.log('⏱ StartedAt:', startedAtTimestamp);
 
-this.taskTimers[task.id!] = setInterval(() => {
-  const now = Date.now();
-  let elapsed = Math.floor((now - startedAtTimestamp) / 1000);
-  if (elapsed < 0) elapsed = 0;
+const initialWorkedSeconds = this.parseTimeToSeconds(task.actualTimeWorked);
+let startedAtTimestamp: number;
 
-  const totalSeconds = initialWorkedSeconds + elapsed;
-  task.actualTimeWorked = this.formatSecondsToHHMMSS(totalSeconds);
+if (typeof task.timerStartedAt === 'string') {
+  startedAtTimestamp = new Date(task.timerStartedAt).getTime(); // ✅ CORRECTO
+} else if (task.timerStartedAt && Object.prototype.toString.call(task.timerStartedAt) === '[object Date]') {
+  startedAtTimestamp = (task.timerStartedAt as Date).getTime();
+} else {
+  startedAtTimestamp = Date.now();
+}
 
-  // 🔥 Forzar actualización del array (clave)
-  this.columns = [...this.columns];
+console.log('⏱ Calculando desde:', {
+  actualTimeWorked: task.actualTimeWorked,
+  parsedSeconds: initialWorkedSeconds,
+  timerStartedAt: task.timerStartedAt,
+  parsedTimestamp: startedAtTimestamp,
+  now: Date.now(),
+  diffSeconds: (Date.now() - startedAtTimestamp) / 1000
+});
 
-  // Para seguridad adicional si tenés OnPush
-  this.cdr.detectChanges();
-}, 1000);
 
+    this.taskTimers[task.id!] = setInterval(() => {
+      console.log(`⏱ Tick para ID: ${task.id}`);
+
+      const now = Date.now();
+      let elapsed = Math.floor((now - startedAtTimestamp) / 1000);
+      if (elapsed < 0) {
+        console.warn(`⚠️ TimerStartedAt en el futuro para task ${task.id}, corrigiendo`);
+        startedAtTimestamp = Date.now();
+        elapsed = 0;
+      }
+
+
+      const totalSeconds = initialWorkedSeconds + elapsed;
+
+      // 🔍 Log interno de cálculo dinámico
+      console.log(`🧮 Elapsed = ${elapsed}, totalSeconds = ${totalSeconds}`);
+
+      const updatedTime = this.formatSecondsToHHMMSS(totalSeconds);
+
+      console.log(`⌛ Nuevo tiempo para ID ${task.id}: ${updatedTime}`);
+
+      for (let col of this.columns) {
+        const t = col.tasks.find(t => t.id === task.id);
+        if (t) {
+          t.actualTimeWorked = updatedTime;
+          console.log(`🟢 actualTimeWorked actualizado en UI para ID ${task.id}: ${t.actualTimeWorked}`);
+        }
+      }
+
+      this.cdr.detectChanges();
+    }, 1000);
   }
-
-
 
   stopVisualTimer(taskId: number): void {
     if (this.taskTimers[taskId]) {

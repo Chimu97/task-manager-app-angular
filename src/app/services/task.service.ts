@@ -38,4 +38,12 @@ export class TaskService {
   toggleTimer(taskId: number): Observable<KanbanTaskItem> {
     return this.http.patch<KanbanTaskItem>(`/api/tasks/${taskId}/toggle-timer`, {});
   }
+
+  getSummary() {
+    return this.http.get('/api/tasks/summary');
+  }
+
+  getDashboardSummary() {
+    return this.http.get('/api/tasks/dashboard-summary');
+  }
 }

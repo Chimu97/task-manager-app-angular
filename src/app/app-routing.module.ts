@@ -4,6 +4,7 @@ import { Pages, paths } from './util';
 import { HomeComponent } from './pages/home/home.component';
 import { canActivateAuth, canActivateAuthPage, canActivateAuthAdmin } from './guards/auth.guard';
 import { RootPageComponent } from './pages/root-page/root-page.component';
+import { DashboardPageComponent } from './dashboard/pages/dashboard-page/dashboard-page.component';
 
 const routes: Routes = [
   {
@@ -61,6 +62,11 @@ const routes: Routes = [
         canActivate: [canActivateAuth],
       },
       {
+        path: 'dashboard',
+        component: DashboardPageComponent,
+        canActivate: [canActivateAuth]
+      },
+      {
         path: Pages.NotFound,
         loadComponent: () =>
           import('./pages/not-found/not-found.component').then((m) => m.NotFoundComponent),
@@ -87,4 +93,4 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule],
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

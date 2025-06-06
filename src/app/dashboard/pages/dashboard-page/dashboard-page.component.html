@@ -1,0 +1,18 @@
+<div class="dashboard-kpis" *ngIf="dashboardSummary">
+  <div class="kpi-card">
+    <h3>Total de tareas</h3>
+    <p>{{ dashboardSummary.totalTasks }}</p>
+  </div>
+  <div class="kpi-card">
+    <h3>Tiempo estimado</h3>
+    <p>{{ dashboardSummary.totalEstimatedTime }}</p>
+  </div>
+  <div class="kpi-card">
+    <h3>Tiempo trabajado</h3>
+    <p>{{ dashboardSummary.totalActualTimeWorked }}</p>
+  </div>
+  <div class="kpi-card overdue">
+    <h3>Tareas atrasadas</h3>
+    <p>{{ dashboardSummary.overdueTaskCount }}</p>
+  </div>
+</div>

@@ -92,9 +92,22 @@ export class AuthService implements OnDestroy {
   }
 
   get currentUserRoles(): string[] {
-    const decodedToken = this._authData?.decodedToken;
-    if (decodedToken?.role) return [decodedToken.role];
-    return decodedToken?.roles ?? [];
+    const decoded: any = this._authData?.decodedToken;
+
+    if (!decoded) return [];
+
+    const roleCandidates = [
+      'role',
+      'roles',
+      'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role',
+    ];
+
+    for (const key of roleCandidates) {
+      const value = decoded[key];
+      if (value) return Array.isArray(value) ? value : [value];
+    }
+    return [];
   }
 
   get currentUserId(): string | undefined {

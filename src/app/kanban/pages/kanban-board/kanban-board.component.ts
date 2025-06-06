@@ -27,6 +27,7 @@ export class KanbanBoardComponent implements OnInit {
   columns: Column[] = [
     { title: 'To Do', status: 'ToDo', tasks: [] },
     { title: 'In Progress', status: 'InProgress', tasks: [] },
+    { title: 'Paused', status: 'Paused', tasks: [] },
     { title: 'Testing', status: 'Testing', tasks: [] },
     { title: 'Done', status: 'Done', tasks: [] }
   ];
@@ -48,10 +49,8 @@ export class KanbanBoardComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    console.log('KANBAN INIT');
 
     this.taskService.getTasks().subscribe((tasks: KanbanTaskItem[]) => {
-      console.log('📦 Tareas recibidas del backend:', tasks);
 
       // Reasignar columnas correctamente
       this.columns = this.columns.map(column => ({
@@ -65,12 +64,6 @@ export class KanbanBoardComponent implements OnInit {
       setTimeout(() => {
         for (const task of tasks) {
           if (task.status === 'InProgress' && task.isTimerRunning) {
-            console.log('▶️ TAREA PARA TIMER:', {
-              id: task.id,
-              title: task.title,
-              actualTimeWorked: task.actualTimeWorked,
-              timerStartedAt: task.timerStartedAt
-            });
             this.startVisualTimer(task);
           }
         }
@@ -100,10 +93,16 @@ export class KanbanBoardComponent implements OnInit {
       task.status = newStatus;
       task.updatedAt = new Date();
 
+      // ⏸️ Si la tarea pasa a "Paused", detenemos el timer visual
+      if (newStatus === 'Paused' && task.isTimerRunning) {
+        this.stopVisualTimer(task.id!);
+      }
+
       this.taskService.updateTask(task).subscribe({
         next: () => {
           this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
 
+          // ▶️ Si pasa a InProgress, reanudamos el timer
           if (newStatus === 'InProgress' && !task.isTimerRunning) {
             this.taskService.toggleTimer(task.id!).subscribe({
               next: (updatedTask) => {
@@ -116,6 +115,8 @@ export class KanbanBoardComponent implements OnInit {
               }
             });
           }
+
+          this.cdr.detectChanges();
         },
         error: () => {
           this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
@@ -123,6 +124,7 @@ export class KanbanBoardComponent implements OnInit {
       });
     }
   }
+
 
   onToggleTimer(task: KanbanTaskItem, event: MouseEvent): void {
     event.stopPropagation();
@@ -147,34 +149,30 @@ export class KanbanBoardComponent implements OnInit {
     });
   }
 
-startVisualTimer(task: KanbanTaskItem): void {
-  const taskId = task.id!; // <-- <- esta es la clave
-  console.log(`🔁 [startVisualTimer] Inicializando timer para ID: ${taskId}`);
+  startVisualTimer(task: KanbanTaskItem): void {
+    const taskId = task.id!;
+    let seconds = this.parseTimeToSeconds(task.actualTimeWorked);
 
-  let seconds = this.parseTimeToSeconds(task.actualTimeWorked);
-
-  // Limpiar timer previo si existe
-  if (this.taskTimers[taskId]) {
-    clearInterval(this.taskTimers[taskId]);
-  }
-
-  this.taskTimers[taskId] = setInterval(() => {
-    seconds += 1;
-    const formatted = this.formatSecondsToHHMMSS(seconds);
-
-    for (let col of this.columns) {
-      const t = col.tasks.find(t => t.id === taskId);
-      if (t) {
-        t.actualTimeWorked = formatted;
-      }
+    // Limpiar timer previo si existe
+    if (this.taskTimers[taskId]) {
+      clearInterval(this.taskTimers[taskId]);
     }
 
-    console.log(`⌛ [${taskId}] actualTimeWorked = ${formatted}`);
-    this.cdr.markForCheck();
-  }, 1000);
-}
+    this.taskTimers[taskId] = setInterval(() => {
+      seconds += 1;
+      const formatted = this.formatSecondsToHHMMSS(seconds);
+
+      for (const column of this.columns) {
+        const currentTask = column.tasks.find(t => t.id === taskId);
+        if (currentTask) {
+          currentTask.actualTimeWorked = formatted;
+        }
+      }
 
 
+      this.cdr.markForCheck();
+    }, 1000);
+  }
 
   stopVisualTimer(taskId: number): void {
     if (this.taskTimers[taskId]) {

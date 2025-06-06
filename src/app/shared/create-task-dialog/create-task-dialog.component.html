@@ -28,7 +28,7 @@
   </mat-form-field>
 </div>
 
-<div class="form-group" *ngIf="isAdminOrSupervisor()">
+<div class="form-group" *ngIf="isAdminOrSupervisor(); else assignedToSelf">
   <mat-form-field appearance="outline" class="full-width">
     <mat-label>Asignar a</mat-label>
     <mat-select [(ngModel)]="assignedUserId">
@@ -38,6 +38,13 @@
     </mat-select>
   </mat-form-field>
 </div>
+
+<ng-template #assignedToSelf>
+  <p style="margin-left: 1px; font-size: 13px; color: gray;">
+    Esta tarea será asignada automáticamente a vos.
+  </p>
+</ng-template>
+
 
 <mat-dialog-actions align="end" class="dialog-actions">
   <button mat-stroked-button (click)="cancel()">Cancelar</button>

@@ -1,4 +1,4 @@
-export type TaskStatus = 'ToDo' | 'InProgress' | 'Testing' | 'Done';
+export type TaskStatus = 'ToDo' | 'InProgress' | 'Paused'| 'Testing' | 'Done';
 
 export interface KanbanTaskItem {
   id?: number;

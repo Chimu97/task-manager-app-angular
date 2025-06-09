@@ -3,12 +3,13 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { KanbanTaskItem } from 'src/app/models/entities/kanban-task-item';
 import { map } from 'rxjs/operators';
+import { DashboardSummary } from 'src/app/models/dtos/dashboard-summary.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskService {
-  private apiUrl = 'http://localhost:5108/api/tasks'; // Cambiado al nuevo backend
+  private apiUrl = 'http://localhost:5108/api/tasks';
 
   constructor(private http: HttpClient) { }
 
@@ -36,14 +37,14 @@ export class TaskService {
   }
 
   toggleTimer(taskId: number): Observable<KanbanTaskItem> {
-    return this.http.patch<KanbanTaskItem>(`/api/tasks/${taskId}/toggle-timer`, {});
+    return this.http.patch<KanbanTaskItem>(`${this.apiUrl}/${taskId}/toggle-timer`, {});
   }
 
-  getSummary() {
-    return this.http.get('/api/tasks/summary');
+  getSummary(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/summary`);
   }
 
-  getDashboardSummary() {
-    return this.http.get('/api/tasks/dashboard-summary');
+  getDashboardSummary(): Observable<DashboardSummary> {
+    return this.http.get<DashboardSummary>('/api/tasks/dashboard-summary');
   }
 }

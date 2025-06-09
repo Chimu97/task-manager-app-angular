@@ -9,6 +9,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';
 import { SharedModule } from './shared';
+import { DashboardModule } from './features/dashboard/dashboard.module';
 
 
 @NgModule({
@@ -23,7 +24,8 @@ import { SharedModule } from './shared';
     MatDialogModule,
     MatButtonModule,
     ConfirmDialogComponent,
-    SharedModule
+    SharedModule,
+    DashboardModule
   ],
   providers: [],
   bootstrap: [AppComponent]

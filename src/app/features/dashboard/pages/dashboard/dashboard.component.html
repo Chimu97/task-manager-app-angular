@@ -1,6 +1,7 @@
 <div class="dashboard-container">
   <h2 class="title">Resumen de Tareas</h2>
 
+  <!-- KPIs -->
   <div class="kpis">
     <div class="kpi-card">
       <p class="kpi-label">Total de tareas</p>
@@ -16,13 +17,24 @@
     </div>
   </div>
 
-  <div class="chart-section" *ngIf="barChartData.labels?.length">
+  <!-- Progreso por usuario -->
+  <div class="chart-section" *ngIf="summary?.userProgress?.length">
     <h3>Progreso por usuario</h3>
-    <canvas baseChart
-            [data]="barChartData"
-            [type]="'bar'">
-    </canvas>
+
+    <div *ngFor="let user of summary?.userProgress" class="user-bar-wrapper">
+      <div class="user-label">
+        {{ user.userName }}
+      </div>
+      <div class="bar-container">
+        <canvas baseChart
+                [data]="getSingleUserChart(user)"
+                [options]="barChartOptions"
+                [type]="'bar'">
+        </canvas>
+      </div>
+    </div>
   </div>
 
+  <!-- Cargando -->
   <p *ngIf="!summary">Cargando resumen...</p>
 </div>

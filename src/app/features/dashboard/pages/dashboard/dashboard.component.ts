@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
-import { ChartConfiguration } from 'chart.js';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Chart, ChartConfiguration, ChartOptions } from 'chart.js';
 import { TaskService } from 'src/app/services/task.service';
 import { DashboardSummary } from 'src/app/models/dtos/dashboard-summary.model';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { DashboardUserProgress } from 'src/app/models/dtos/dashboard-summary.model';
+Chart.register(ChartDataLabels);
 
 @Component({
   selector: 'app-dashboard',
@@ -18,15 +21,66 @@ export class DashboardComponent implements OnInit {
         data: [],
         label: 'Progreso (%)',
         backgroundColor: '#42a5f5',
+        borderSkipped: false
       }
     ]
   };
 
-  constructor(private taskService: TaskService) {}
+barChartOptions: ChartOptions<'bar'> = {
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      ticks: {
+        callback: (value) => `${value}%`,
+        color: '#aaa'
+      },
+      max: 100,
+      grid: {
+        color: '#444'
+      }
+    },
+    y: {
+      display: false
+    }
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx) => `${ctx.raw}%`
+      }
+    },
+    datalabels: {
+      anchor: 'end',
+      align: 'end',
+      color: '#fff',
+      font: {
+        weight: 'bold'
+      },
+      formatter: (value, ctx) => {
+        const user = this.summary?.userProgress?.[ctx.dataIndex];
+        return value > 0
+          ? (user?.currentTaskTitle ?? '')
+          : '';
+      }
+    }
+  }
+};
+
+
+
+
+  constructor(
+    private taskService: TaskService,
+    private cdr: ChangeDetectorRef,
+  ) { }
 
   ngOnInit(): void {
     this.taskService.getDashboardSummary().subscribe({
       next: (data) => {
+        console.log('Resumen del dashboard:', data);
         this.summary = data;
 
         const labels: string[] = [];
@@ -46,10 +100,13 @@ export class DashboardComponent implements OnInit {
             {
               data: progress,
               label: 'Progreso (%)',
-              backgroundColor: '#42a5f5'
+              backgroundColor: '#42a5f5',
+              borderSkipped: false
             }
           ]
         };
+
+        this.cdr.detectChanges(); // ✅ Forzar renderizado si usás OnPush
       },
       error: (err) => console.error('Error al cargar el resumen', err)
     });
@@ -59,4 +116,20 @@ export class DashboardComponent implements OnInit {
     const parts = timeString.split(':').map(Number);
     return (parts[0] * 3600) + (parts[1] * 60) + (parts[2] || 0);
   }
+
+getSingleUserChart(user: DashboardUserProgress): ChartConfiguration<'bar'>['data'] {
+  const estimated = this.parseTime(user.estimatedTime);
+  const actual = this.parseTime(user.actualTimeWorked);
+  const percent = estimated > 0 ? Math.min((actual / estimated) * 100, 100) : 0;
+
+  return {
+    labels: [''],
+    datasets: [{
+      data: [percent],
+      label: '',
+      backgroundColor: percent > 0 ? '#3b82f6' : 'transparent'
+    }]
+  };
+}
+
 }

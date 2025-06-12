@@ -19,4 +19,5 @@ export interface KanbanTaskItem {
   actualTimeWorked: string;     // ej. "00:12:34"
   isTimerRunning: boolean;
   timerStartedAt?: string | null;
+  finishedAt?: Date | null; 
 }

@@ -4,6 +4,7 @@ export interface DashboardUserProgress {
   taskCount: number;
   estimatedTime: string;
   actualTimeWorked: string;
+  currentTaskTitle?: string;
 }
 
 export interface DashboardSummary {

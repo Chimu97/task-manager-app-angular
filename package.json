@@ -25,6 +25,7 @@
     "@angular/platform-browser-dynamic": "^17.3.12",
     "@angular/router": "^17.3.12",
     "chart.js": "^4.4.9",
+    "chartjs-plugin-datalabels": "^2.2.0",
     "jwt-decode": "^3.1.2",
     "lodash-es": "^4.17.21",
     "mapper-ts": "^1.2.2",

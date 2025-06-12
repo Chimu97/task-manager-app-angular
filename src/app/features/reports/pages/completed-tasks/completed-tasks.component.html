@@ -1,0 +1,63 @@
+<section class="completed-container" *ngIf="!loading; else loadingTpl">
+    <h2>Tareas completadas</h2>
+
+    <div class="filter-bar">
+        <div class="filter-item">
+            <span>Desde:</span>
+            <input type="date" [(ngModel)]="fromDate" />
+
+
+
+        </div>
+
+        <div class="filter-item">
+            <span>Hasta:</span>
+            <input type="date" [(ngModel)]="toDate" />
+        </div>
+
+        <div class="filter-item">
+            <span>Usuario:</span>
+            <select [(ngModel)]="selectedUser" (change)="filtrarPorFechas()">
+                <option value="all">Todos</option>
+                <option *ngFor="let user of userList" [value]="user">{{ user }}</option>
+            </select>
+        </div>
+
+        <button (click)="filtrarPorFechas()">Filtrar</button>
+        <button (click)="resetFiltro()">Limpiar</button>
+
+
+    </div>
+
+
+    <div *ngIf="tasks.length === 0">
+        <p>No hay tareas finalizadas.</p>
+    </div>
+
+    <table class="completed-table" *ngIf="tasks.length > 0">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Tarea</th>
+                <th>Estimado</th>
+                <th>Trabajado</th>
+                <th>Finalizado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let task of tasks">
+                <td>{{ task.assignedUser?.userName || 'N/D' }}</td>
+                <td>{{ task.title }}</td>
+                <td>{{ task.estimatedTime }}</td>
+                <td>{{ task.actualTimeWorked }}</td>
+                <td>{{ task.finishedAt | date: 'short' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+</section>
+
+<ng-template #loadingTpl>
+    <p>Cargando tareas completadas...</p>
+</ng-template>

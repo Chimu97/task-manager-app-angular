@@ -47,4 +47,8 @@ export class TaskService {
   getDashboardSummary(): Observable<DashboardSummary> {
     return this.http.get<DashboardSummary>('/api/tasks/dashboard-summary');
   }
+
+  getCompletedTasks(): Observable<KanbanTaskItem[]> {
+    return this.http.get<KanbanTaskItem[]>(`${this.apiUrl}/completed`);
+  }
 }

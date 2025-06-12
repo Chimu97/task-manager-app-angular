@@ -67,6 +67,12 @@ const routes: Routes = [
         canActivate: [canActivateAuth],
       },
       {
+        path: 'reports',
+        loadChildren: () =>
+          import('./features/reports/reports.module').then(m => m.ReportsModule),
+        canActivate: [canActivateAuth],
+      },
+      {
         path: Pages.NotFound,
         loadComponent: () =>
           import('./pages/not-found/not-found.component').then((m) => m.NotFoundComponent),
@@ -93,4 +99,4 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule],
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

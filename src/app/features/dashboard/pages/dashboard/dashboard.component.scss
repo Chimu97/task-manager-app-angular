@@ -38,4 +38,30 @@
     padding: 1rem;
     border-radius: 0.5rem;
   }
+
+  .user-bar-wrapper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .user-label {
+    width: 150px;
+    font-weight: bold;
+    color: #ccc;
+    padding-right: 1rem;
+    text-align: right;
+  }
+
+  .bar-container {
+    flex-grow: 1;
+    height: 24px;
+    display: flex;
+    align-items: center;
+
+    canvas {
+      max-height: 100%;
+    }
+  }
+  
 }

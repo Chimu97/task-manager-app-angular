@@ -9,7 +9,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import { AuthService } from 'src/app/services/auth.service';
 import { KanbanTaskItem } from 'src/app/models/entities/kanban-task-item';
-import { TaskService } from 'src/app/services/task.service';
 
 
 export interface CreateTaskDialogData {
@@ -42,7 +41,6 @@ export class CreateTaskDialogComponent {
     public dialogRef: MatDialogRef<CreateTaskDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: CreateTaskDialogData,
     private authService: AuthService,
-    private taskService: TaskService
   ) {
     this.assignedUserId = data.userId;
   }
@@ -53,21 +51,16 @@ export class CreateTaskDialogComponent {
   }
 
   createTask(): void {
-    const task: KanbanTaskItem = {
+    const task = {
       title: this.title,
       description: this.description,
-      status: 'ToDo',
       estimatedTime: this.estimatedTime,
-      actualTimeWorked: '00:00:00',
-      isTimerRunning: false,
       assignedUserId: this.isAdminOrSupervisor()
         ? Number(this.assignedUserId)
         : Number(this.authService.currentUserId),
     };
-    this.taskService.createTask(task).subscribe({
-      next: () => this.dialogRef.close(true),
-      error: (error) => console.error('Error al crear tarea:', error),
-    });
+
+    this.dialogRef.close(task);
   }
 
   cancel(): void {

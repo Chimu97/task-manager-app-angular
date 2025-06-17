@@ -1,5 +1,5 @@
 <div class="dashboard-container">
-  <h2 class="title">Resumen de Tareas</h2>
+  <h2 class="title">Resumen general de tareas</h2>
 
   <!-- KPIs -->
   <div class="kpis">
@@ -15,22 +15,39 @@
       <p class="kpi-label">Tiempo trabajado</p>
       <p class="kpi-value">{{ summary?.totalActualTimeWorked ?? '–' }}</p>
     </div>
+    <div class="kpi-card overdue">
+      <p class="kpi-label">Tareas vencidas</p>
+      <p class="kpi-value">{{ summary?.overdueTaskCount ?? '–' }}</p>
+    </div>
   </div>
 
-  <!-- Progreso por usuario -->
-  <div class="chart-section" *ngIf="summary?.userProgress?.length">
-    <h3>Progreso por usuario</h3>
+  <!-- Progreso por usuario (gráficos individuales) -->
+  <div class="chart-section" *ngIf="allUsers?.length">
+    <h3 class="section-title">Progreso individual</h3>
 
-    <div *ngFor="let user of summary?.userProgress" class="user-bar-wrapper">
-      <div class="user-label">
-        {{ user.userName }}
-      </div>
-      <div class="bar-container">
+    <div class="user-chart-grid">
+      <div class="user-chart-wrapper" *ngFor="let user of allUsers">
+        
+        <!-- Título de la tarea activa -->
+        <div class="task-title">
+          {{ user.currentTaskTitle || 'Sin tarea activa' }}
+        </div>
+
+        <!-- Gráfico doughnut -->
         <canvas baseChart
-                [data]="getSingleUserChart(user)"
-                [options]="barChartOptions"
-                [type]="'bar'">
+                [data]="getUserDoughnutData(user)"
+                [options]="doughnutChartOptions"
+                [type]="'doughnut'">
         </canvas>
+
+        <!-- Nombre del usuario -->
+        <div class="user-label">{{ user.userName }}</div>
+
+        <!-- Tiempos -->
+        <div class="time-summary">
+          <small>🕒 Estimado: {{ user.estimatedTime || '00:00:00' }}</small><br />
+          <small>⏱ Trabajado: {{ user.actualTimeWorked || '00:00:00' }}</small>
+        </div>
       </div>
     </div>
   </div>

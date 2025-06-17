@@ -1,9 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { Chart, ChartConfiguration, ChartOptions } from 'chart.js';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Chart, ChartConfiguration, ChartData, ChartOptions } from 'chart.js';
 import { TaskService } from 'src/app/services/task.service';
-import { DashboardSummary } from 'src/app/models/dtos/dashboard-summary.model';
+import { DashboardSummary, DashboardUserProgress } from 'src/app/models/dtos/dashboard-summary.model';
+import { ProfileService } from 'src/app/pages/profile/services/profile.service';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { DashboardUserProgress } from 'src/app/models/dtos/dashboard-summary.model';
+
 Chart.register(ChartDataLabels);
 
 @Component({
@@ -11,104 +12,83 @@ Chart.register(ChartDataLabels);
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   summary: DashboardSummary | null = null;
+  allUsers: DashboardUserProgress[] = [];
+  private dataRefreshInterval: any;
 
-  barChartData: ChartConfiguration<'bar'>['data'] = {
-    labels: [] as string[],
-    datasets: [
-      {
-        data: [],
-        label: 'Progreso (%)',
-        backgroundColor: '#42a5f5',
-        borderSkipped: false
+  doughnutChartOptions: ChartOptions<'doughnut'> = {
+    responsive: true,
+    cutout: '70%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `${ctx.label}: ${ctx.raw}`
+        }
+      },
+      datalabels: {
+        display: true,
+        color: '#ffffff',
+        font: {
+          weight: 'bold',
+          size: 16
+        },
+        formatter: (value, ctx) => {
+          const data = ctx.chart.data.datasets[0].data;
+          const total = Number(data[0]) + Number(data[1] ?? 0);
+          const percent = total > 0 ? Math.round((Number(data[0]) / total) * 100) : 0;
+          return `${percent}%`;
+        }
       }
-    ]
+    }
   };
-
-barChartOptions: ChartOptions<'bar'> = {
-  indexAxis: 'y',
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    x: {
-      ticks: {
-        callback: (value) => `${value}%`,
-        color: '#aaa'
-      },
-      max: 100,
-      grid: {
-        color: '#444'
-      }
-    },
-    y: {
-      display: false
-    }
-  },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx) => `${ctx.raw}%`
-      }
-    },
-    datalabels: {
-      anchor: 'end',
-      align: 'end',
-      color: '#fff',
-      font: {
-        weight: 'bold'
-      },
-      formatter: (value, ctx) => {
-        const user = this.summary?.userProgress?.[ctx.dataIndex];
-        return value > 0
-          ? (user?.currentTaskTitle ?? '')
-          : '';
-      }
-    }
-  }
-};
-
-
-
 
   constructor(
     private taskService: TaskService,
-    private cdr: ChangeDetectorRef,
-  ) { }
+    private profileService: ProfileService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
+    this.loadDashboardData();
+
+    // 🔁 Refrescar todo el resumen (tiempo real) cada 5 segundos
+    this.dataRefreshInterval = setInterval(() => {
+      this.loadDashboardData();
+    }, 5000);
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.dataRefreshInterval);
+  }
+
+  private loadDashboardData(): void {
     this.taskService.getDashboardSummary().subscribe({
-      next: (data) => {
-        console.log('Resumen del dashboard:', data);
-        this.summary = data;
+      next: (summary) => {
+        this.summary = summary;
 
-        const labels: string[] = [];
-        const progress: number[] = [];
+        this.profileService.getAllUsers().subscribe({
+          next: (allProfiles) => {
+            this.allUsers = allProfiles.map(profile => {
+              const data = summary.userProgress.find(u => u.userId === profile.id);
+              return data ?? {
+                userId: profile.id,
+                userName: profile.userName,
+                estimatedTime: '00:00:00',
+                actualTimeWorked: '00:00:00',
+                currentTaskTitle: undefined,
+                taskCount: 0,
+                isTimerRunning: false
+              };
+            });
 
-        for (const user of data.userProgress) {
-          labels.push(user.userName);
-          const estimated = this.parseTime(user.estimatedTime);
-          const actual = this.parseTime(user.actualTimeWorked);
-          const percent = estimated > 0 ? Math.min((actual / estimated) * 100, 100) : 0;
-          progress.push(+percent.toFixed(1));
-        }
-
-        this.barChartData = {
-          labels,
-          datasets: [
-            {
-              data: progress,
-              label: 'Progreso (%)',
-              backgroundColor: '#42a5f5',
-              borderSkipped: false
-            }
-          ]
-        };
-
-        this.cdr.detectChanges(); // ✅ Forzar renderizado si usás OnPush
+            this.cdr.detectChanges();
+          },
+          error: (err) => console.error('Error al cargar perfiles de usuario', err)
+        });
       },
-      error: (err) => console.error('Error al cargar el resumen', err)
+      error: (err) => console.error('Error al cargar el resumen del dashboard', err)
     });
   }
 
@@ -117,19 +97,40 @@ barChartOptions: ChartOptions<'bar'> = {
     return (parts[0] * 3600) + (parts[1] * 60) + (parts[2] || 0);
   }
 
-getSingleUserChart(user: DashboardUserProgress): ChartConfiguration<'bar'>['data'] {
-  const estimated = this.parseTime(user.estimatedTime);
-  const actual = this.parseTime(user.actualTimeWorked);
-  const percent = estimated > 0 ? Math.min((actual / estimated) * 100, 100) : 0;
+  formatTime(totalSeconds: number): string {
+    const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }
 
-  return {
-    labels: [''],
-    datasets: [{
-      data: [percent],
-      label: '',
-      backgroundColor: percent > 0 ? '#3b82f6' : 'transparent'
-    }]
-  };
-}
+  getUserDoughnutData(user: DashboardUserProgress): ChartData<'doughnut'> {
+    const estimated = this.parseTime(user.estimatedTime);
+    const actual = this.parseTime(user.actualTimeWorked);
 
+    if (estimated === 0 && actual === 0) {
+      return {
+        labels: ['Sin actividad'],
+        datasets: [{
+          data: [1],
+          backgroundColor: ['#777'],
+          hoverBackgroundColor: ['#888'],
+          borderWidth: 0
+        }]
+      };
+    }
+
+    const worked = Math.min(actual, estimated);
+    const remaining = Math.max(estimated - worked, 0);
+
+    return {
+      labels: ['Trabajado', 'Restante'],
+      datasets: [{
+        data: [worked, remaining],
+        backgroundColor: ['#3b82f6', '#e5e7eb'],
+        hoverBackgroundColor: ['#2563eb', '#d1d5db'],
+        borderWidth: 0
+      }]
+    };
+  }
 }

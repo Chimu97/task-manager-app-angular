@@ -5,6 +5,7 @@ export interface DashboardUserProgress {
   estimatedTime: string;
   actualTimeWorked: string;
   currentTaskTitle?: string;
+  isTimerRunning: boolean; 
 }
 
 export interface DashboardSummary {

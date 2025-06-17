@@ -1,67 +1,110 @@
 .dashboard-container {
-  padding: 1rem;
-  background-color: #1e1e2f;
-  color: #fff;
+  padding: 24px;
+  font-family: 'Segoe UI', sans-serif;
+}
 
-  .title {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: #ffffff;
+}
 
-  .kpis {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
+.kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
 
-    .kpi-card {
-      background: #2e2e3e;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      flex: 1;
-      text-align: center;
+.kpi-card {
+  background-color: #f4f4f4;
+  padding: 12px 16px;
+  border-radius: 10px;
+  flex: 1;
+  min-width: 180px;
+  max-width: 220px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease;
+}
 
-      .kpi-label {
-        font-size: 0.9rem;
-        color: #aaa;
-      }
+.kpi-card:hover {
+  transform: translateY(-4px);
+}
 
-      .kpi-value {
-        font-size: 1.3rem;
-        font-weight: bold;
-        color: #42a5f5;
-      }
-    }
-  }
+.kpi-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
 
-  .chart-section {
-    background: #2e2e3e;
-    padding: 1rem;
-    border-radius: 0.5rem;
-  }
+.kpi-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #222;
+}
 
-  .user-bar-wrapper {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
+.kpi-card.overdue {
+  background-color: #ffeaea;
+  border-left: 6px solid #ff4d4d;
+}
 
-  .user-label {
-    width: 150px;
-    font-weight: bold;
-    color: #ccc;
-    padding-right: 1rem;
-    text-align: right;
-  }
+.chart-section {
+  margin-top: 20px;
+  padding-top: 8px;
+  border-top: 1px solid #ddd;
+}
 
-  .bar-container {
-    flex-grow: 1;
-    height: 24px;
-    display: flex;
-    align-items: center;
+.section-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #e0e0e0;
+  text-align: center;
+}
 
-    canvas {
-      max-height: 100%;
-    }
-  }
-  
+.user-chart-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px;
+  padding: 12px 0;
+}
+
+.user-chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 140px;
+  margin: 12px;
+}
+
+.user-chart-wrapper canvas {
+  width: 100px !important;
+  height: 100px !important;
+}
+
+.task-title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #ccc;
+  text-align: center;
+  min-height: 32px;
+}
+
+.user-label {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #f0f0f0;
+  text-align: center;
+}
+
+.time-summary {
+  text-align: center;
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 4px;
 }

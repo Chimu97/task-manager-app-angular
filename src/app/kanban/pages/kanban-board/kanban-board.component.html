@@ -1,7 +1,7 @@
 <!-- Botón para crear tarea (ahora abre modal) -->
 <div class="new-task-form">
-  <button (click)="openCreateTaskDialog()">
-    + Nueva Tarea
+  <button *ngIf="isAdminOrSupervisor()" (click)="openCreateTaskDialog()">
+    Crear tarea
   </button>
 </div>
 
@@ -16,30 +16,30 @@
       <ng-container *ngIf="column.tasks.length > 0; else emptyColumn">
         <div class="task-card" *ngFor="let task of column.tasks; let taskIndex = index" cdkDrag
           (click)="editTask(colIndex, taskIndex)">
-          <div class="task-main">
-            <div class="task-title">{{ task.title }}</div>
-            <div class="task-id">#{{ task.id }}</div>
+
+          <div class="task-header">
+            <span class="task-id">#{{ task.id }}</span>
           </div>
 
-          <div class="task-times">
-            <small>🕒 Estimado: {{ task.estimatedTime }}</small><br />
-            <small>⏱ Trabajado: {{ task.actualTimeWorked }}</small>
+          <div class="task-title">{{ task.title }}</div>
+
+          <div class="task-footer">
+            <small>🕒 {{ task.estimatedTime }} | ⏱ {{ task.actualTimeWorked }}</small>
+            <span class="task-tag" *ngIf="task.assignedTo" [ngStyle]="{
+    'background-color': task.assignedUser?.colorHex,
+    'color': getTextColor(task.assignedUser?.colorHex)
+  }">
+              {{ task.assignedTo }}
+            </span>
+
           </div>
 
-          <div class="task-timer-status" *ngIf="task.status === 'InProgress'">
-            <small *ngIf="task.isTimerRunning">⏱️ En progreso</small>
-            <small *ngIf="!task.isTimerRunning">⏸️ Pausado</small>
-          </div>
-
-          <div class="task-timer-controls" *ngIf="task.status === 'InProgress'">
+          <!-- <div class="task-timer-controls" *ngIf="task.status === 'InProgress' || task.status === 'Testing'">
             <button (click)="onToggleTimer(task, $event)">
               {{ task.isTimerRunning ? '⏸️ Pausar' : '▶️ Reanudar' }}
             </button>
-          </div>
+          </div> -->
 
-          <div class="task-meta" *ngIf="task.assignedTo">
-            <span class="task-tag">{{ task.assignedTo }}</span>
-          </div>
         </div>
       </ng-container>
 

@@ -76,6 +76,12 @@ export class KanbanBoardComponent implements OnInit {
   drop(event: CdkDragDrop<KanbanTaskItem[]>, newStatus: KanbanTaskItem['status']) {
     const task = event.previousContainer.data[event.previousIndex];
 
+    // 🚫 Validación de transición no permitida
+    if (!this.isValidTransition(task.status, newStatus)) {
+      this.snackBar.open('Transición de estado no permitida', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
     if (event.previousContainer === event.container) {
       moveItemInArray(
         event.container.data,
@@ -90,40 +96,106 @@ export class KanbanBoardComponent implements OnInit {
         event.currentIndex
       );
 
+      const previousStatus = task.status;
       task.status = newStatus;
       task.updatedAt = new Date();
 
-      // ⏸️ Si la tarea pasa a "Paused", detenemos el timer visual
+      // ⏸ Pausar si pasa a "Paused"
       if (newStatus === 'Paused' && task.isTimerRunning) {
-        this.stopVisualTimer(task.id!);
-      }
-
-      this.taskService.updateTask(task).subscribe({
-        next: () => {
-          this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
-
-          // ▶️ Si pasa a InProgress, reanudamos el timer
-          if (newStatus === 'InProgress' && !task.isTimerRunning) {
-            this.taskService.toggleTimer(task.id!).subscribe({
-              next: (updatedTask) => {
-                Object.assign(task, updatedTask);
-                this.startVisualTimer(task);
+        this.taskService.toggleTimer(task.id!).subscribe({
+          next: (updatedTask) => {
+            Object.assign(task, updatedTask);
+            task.status = newStatus;
+            this.stopVisualTimer(task.id!);
+            this.taskService.updateTask(task).subscribe({
+              next: () => {
+                this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
                 this.cdr.detectChanges();
               },
               error: () => {
-                this.snackBar.open('Error al iniciar temporizador', 'Cerrar', { duration: 3000 });
+                this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
               }
             });
+          },
+          error: () => {
+            this.snackBar.open('Error al pausar temporizador', 'Cerrar', { duration: 3000 });
           }
+        });
+      }
 
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
-        }
-      });
+      // ▶ Reanudar si pasa a "InProgress"
+      else if (newStatus === 'InProgress' && !task.isTimerRunning) {
+        this.taskService.toggleTimer(task.id!).subscribe({
+          next: (updatedTask) => {
+            Object.assign(task, updatedTask);
+            task.status = newStatus;
+            this.startVisualTimer(task);
+            this.taskService.updateTask(task).subscribe({
+              next: () => {
+                this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
+                this.cdr.detectChanges();
+              },
+              error: () => {
+                this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
+              }
+            });
+          },
+          error: () => {
+            this.snackBar.open('Error al iniciar temporizador', 'Cerrar', { duration: 3000 });
+          }
+        });
+      }
+
+      // ⏹ Detener si pasa a "Done"
+      else if (newStatus === 'Done' && task.isTimerRunning) {
+        this.taskService.toggleTimer(task.id!).subscribe({
+          next: (updatedTask) => {
+            Object.assign(task, updatedTask);
+            task.status = newStatus;
+            this.stopVisualTimer(task.id!);
+            this.taskService.updateTask(task).subscribe({
+              next: () => {
+                this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
+                this.cdr.detectChanges();
+              },
+              error: () => {
+                this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
+              }
+            });
+          },
+          error: () => {
+            this.snackBar.open('Error al detener temporizador', 'Cerrar', { duration: 3000 });
+          }
+        });
+      }
+
+      // Otros cambios sin impacto en el temporizador
+      else {
+        this.taskService.updateTask(task).subscribe({
+          next: () => {
+            this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
+          }
+        });
+      }
     }
   }
+
+  private isValidTransition(from: KanbanTaskItem['status'], to: KanbanTaskItem['status']): boolean {
+    const rules: Record<string, string[]> = {
+      ToDo: ['InProgress'],
+      InProgress: ['Paused', 'Testing'],
+      Paused: ['InProgress'],
+      Testing: ['InProgress', 'Done'],
+      Done: [] // No se puede mover desde Done
+    };
+
+    return rules[from]?.includes(to);
+  }
+
 
 
   onToggleTimer(task: KanbanTaskItem, event: MouseEvent): void {
@@ -301,6 +373,24 @@ export class KanbanBoardComponent implements OnInit {
         });
       }
     });
+  }
+
+  public isAdminOrSupervisor(): boolean {
+    const roles = this.tokenService.getRoles();
+    return roles.includes('Admin') || roles.includes('Supervisor');
+  }
+
+  getTextColor(hslColor?: string): string {
+    if (!hslColor || !hslColor.startsWith('hsl')) return 'white';
+
+    // Extraer valores numéricos de hsl(x, y%, l%)
+    const match = hslColor.match(/hsl\(\s*(\d+),\s*(\d+)%?,\s*(\d+)%?\)/);
+    if (!match) return 'white';
+
+    const lightness = parseInt(match[3], 10); // tercer valor = L (luminosidad)
+
+    // Si la luminosidad es mayor a 60%, usamos texto oscuro
+    return lightness > 60 ? 'black' : 'white';
   }
 
 }

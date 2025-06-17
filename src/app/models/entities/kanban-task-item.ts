@@ -13,10 +13,11 @@ export interface KanbanTaskItem {
   assignedUser?: {
     id: number;
     userName: string;
+    colorHex?: string;
   };
 
-  estimatedTime: string;        // ej. "01:30:00"
-  actualTimeWorked: string;     // ej. "00:12:34"
+  estimatedTime: string;
+  actualTimeWorked: string;
   isTimerRunning: boolean;
   timerStartedAt?: string | null;
   finishedAt?: Date | null; 

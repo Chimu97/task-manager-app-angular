@@ -1,52 +1,72 @@
 <mat-dialog-content class="dialog-container">
   <h2 class="dialog-title">Crear nueva tarea</h2>
 
-  <div class="form-group">
+  <form [formGroup]="form" class="form-body-vertical">
+    <!-- Título -->
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Título</mat-label>
-      <input matInput [(ngModel)]="title" placeholder="Escribe un título claro" />
+      <input matInput formControlName="title" />
+      <mat-error *ngIf="form.get('title')?.hasError('required')">
+        El título es obligatorio.
+      </mat-error>
     </mat-form-field>
-  </div>
 
-<div class="form-group">
-  <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Descripción</mat-label>
-    <textarea
-      matInput
-      rows="4"
-      [(ngModel)]="description"
-      placeholder="Agrega detalles o requisitos importantes"
-    ></textarea>
-  </mat-form-field>
-</div>
+    <!-- Tiempo estimado -->
+    <div class="time-select-group">
+      <label class="time-label">Tiempo estimado *</label>
+      <div class="time-selects">
+        <mat-form-field appearance="outline" class="time-select">
+          <mat-label>Horas</mat-label>
+          <mat-select formControlName="hours">
+            <mat-option *ngFor="let h of hours" [value]="h">{{ h }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-<!-- NUEVO CAMPO DE TIEMPO -->
-<div class="form-group">
-  <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Tiempo estimado (hh:mm:ss)</mat-label>
-    <input matInput [(ngModel)]="estimatedTime" placeholder="Ej: 01:30:00" />
-  </mat-form-field>
-</div>
+        <mat-form-field appearance="outline" class="time-select">
+          <mat-label>Minutos</mat-label>
+          <mat-select formControlName="minutes">
+            <mat-option *ngFor="let m of minutes" [value]="m">{{ m }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-<div class="form-group" *ngIf="isAdminOrSupervisor(); else assignedToSelf">
-  <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Asignar a</mat-label>
-    <mat-select [(ngModel)]="assignedUserId">
-      <mat-option *ngFor="let user of data.availableUsers" [value]="user.id">
-        {{ user.userName }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-</div>
+        <mat-form-field appearance="outline" class="time-select">
+          <mat-label>Segundos</mat-label>
+          <mat-select formControlName="seconds">
+            <mat-option *ngFor="let s of seconds" [value]="s">{{ s }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
 
-<ng-template #assignedToSelf>
-  <p style="margin-left: 1px; font-size: 13px; color: gray;">
-    Esta tarea será asignada automáticamente a vos.
-  </p>
-</ng-template>
+      <mat-error *ngIf="form.hasError('zeroTime')">
+        El tiempo estimado no puede ser 00:00:00.
+      </mat-error>
+    </div>
 
+    <!-- Asignación -->
+    <mat-form-field appearance="outline" class="full-width" *ngIf="isAdminOrSupervisor(); else assignedToSelf">
+      <mat-label>Asignar a</mat-label>
+      <mat-select formControlName="assignedUserId">
+        <mat-option *ngFor="let user of data.availableUsers" [value]="user.id">
+          {{ user.userName }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <ng-template #assignedToSelf>
+      <p class="auto-assign-info">Esta tarea será asignada automáticamente a vos.</p>
+    </ng-template>
+
+    <!-- Descripción -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción</mat-label>
+      <textarea matInput rows="3" formControlName="description"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
 
 <mat-dialog-actions align="end" class="dialog-actions">
-  <button mat-stroked-button (click)="cancel()">Cancelar</button>
-  <button mat-flat-button color="primary" (click)="createTask()" [disabled]="!title.trim()">Crear</button>
+  <button mat-stroked-button class="cancel-btn" (click)="cancel()">Cancelar</button>
+  <button mat-flat-button class="create-btn" (click)="createTask()" [disabled]="form.invalid">
+    Crear
+  </button>
 </mat-dialog-actions>

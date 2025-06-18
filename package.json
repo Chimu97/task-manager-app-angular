@@ -30,6 +30,7 @@
     "lodash-es": "^4.17.21",
     "mapper-ts": "^1.2.2",
     "ng2-charts": "^4.1.1",
+    "ngx-mask": "^19.0.7",
     "ngx-owl-carousel-o": "^17.0.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",

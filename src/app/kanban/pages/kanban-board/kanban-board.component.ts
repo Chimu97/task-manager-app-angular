@@ -49,7 +49,6 @@ export class KanbanBoardComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-
     this.taskService.getTasks().subscribe((tasks: KanbanTaskItem[]) => {
 
       // Reasignar columnas correctamente
@@ -72,117 +71,31 @@ export class KanbanBoardComponent implements OnInit {
       this.cdr.detectChanges();
     });
   }
+private reloadAllTasks(): void {
+  this.taskService.getTasks().subscribe({
+    next: (tasks) => {
+      this.columns.forEach(col => col.tasks = []);
 
-  drop(event: CdkDragDrop<KanbanTaskItem[]>, newStatus: KanbanTaskItem['status']) {
-    const task = event.previousContainer.data[event.previousIndex];
+      tasks.forEach(task => {
+        const column = this.columns.find(c => c.status === task.status);
+        if (column) column.tasks.push(task);
 
-    // 🚫 Validación de transición no permitida
-    if (!this.isValidTransition(task.status, newStatus)) {
-      this.snackBar.open('Transición de estado no permitida', 'Cerrar', { duration: 3000 });
-      return;
+        // ✅ Detener visualmente si el timer ya no está corriendo
+        if (!task.isTimerRunning) {
+          this.stopVisualTimer(task.id!);
+        } else {
+          this.startVisualTimer(task); // (opcional) por si querés reactivarlo visualmente
+        }
+      });
+
+      this.cdr.detectChanges();
+    },
+    error: () => {
+      this.snackBar.open('Error al recargar tareas', 'Cerrar', { duration: 3000 });
     }
+  });
+}
 
-    if (event.previousContainer === event.container) {
-      moveItemInArray(
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
-    } else {
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
-
-      const previousStatus = task.status;
-      task.status = newStatus;
-      task.updatedAt = new Date();
-
-      // ⏸ Pausar si pasa a "Paused"
-      if (newStatus === 'Paused' && task.isTimerRunning) {
-        this.taskService.toggleTimer(task.id!).subscribe({
-          next: (updatedTask) => {
-            Object.assign(task, updatedTask);
-            task.status = newStatus;
-            this.stopVisualTimer(task.id!);
-            this.taskService.updateTask(task).subscribe({
-              next: () => {
-                this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
-                this.cdr.detectChanges();
-              },
-              error: () => {
-                this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
-              }
-            });
-          },
-          error: () => {
-            this.snackBar.open('Error al pausar temporizador', 'Cerrar', { duration: 3000 });
-          }
-        });
-      }
-
-      // ▶ Reanudar si pasa a "InProgress"
-      else if (newStatus === 'InProgress' && !task.isTimerRunning) {
-        this.taskService.toggleTimer(task.id!).subscribe({
-          next: (updatedTask) => {
-            Object.assign(task, updatedTask);
-            task.status = newStatus;
-            this.startVisualTimer(task);
-            this.taskService.updateTask(task).subscribe({
-              next: () => {
-                this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
-                this.cdr.detectChanges();
-              },
-              error: () => {
-                this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
-              }
-            });
-          },
-          error: () => {
-            this.snackBar.open('Error al iniciar temporizador', 'Cerrar', { duration: 3000 });
-          }
-        });
-      }
-
-      // ⏹ Detener si pasa a "Done"
-      else if (newStatus === 'Done' && task.isTimerRunning) {
-        this.taskService.toggleTimer(task.id!).subscribe({
-          next: (updatedTask) => {
-            Object.assign(task, updatedTask);
-            task.status = newStatus;
-            this.stopVisualTimer(task.id!);
-            this.taskService.updateTask(task).subscribe({
-              next: () => {
-                this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
-                this.cdr.detectChanges();
-              },
-              error: () => {
-                this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
-              }
-            });
-          },
-          error: () => {
-            this.snackBar.open('Error al detener temporizador', 'Cerrar', { duration: 3000 });
-          }
-        });
-      }
-
-      // Otros cambios sin impacto en el temporizador
-      else {
-        this.taskService.updateTask(task).subscribe({
-          next: () => {
-            this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
-            this.cdr.detectChanges();
-          },
-          error: () => {
-            this.snackBar.open('Error al actualizar tarea', 'Cerrar', { duration: 3000 });
-          }
-        });
-      }
-    }
-  }
 
   private isValidTransition(from: KanbanTaskItem['status'], to: KanbanTaskItem['status']): boolean {
     const rules: Record<string, string[]> = {
@@ -195,6 +108,82 @@ export class KanbanBoardComponent implements OnInit {
 
     return rules[from]?.includes(to);
   }
+
+
+  drop(event: CdkDragDrop<KanbanTaskItem[]>, newStatus: KanbanTaskItem['status']) {
+    const task = event.previousContainer.data[event.previousIndex];
+
+    if (!this.isValidTransition(task.status, newStatus)) {
+      this.snackBar.open('Transición de estado no permitida', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    if (event.previousContainer === event.container) {
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+    } else {
+      transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
+
+      const previousStatus = task.status;
+      task.status = newStatus;
+      task.updatedAt = new Date();
+
+      const refresh = () => {
+        this.snackBar.open('Tarea actualizada', 'Cerrar', { duration: 2000 });
+        this.reloadAllTasks(); // ✅ esto actualiza TODO
+      };
+
+      const handleError = (msg: string) => {
+        this.snackBar.open(msg, 'Cerrar', { duration: 3000 });
+      };
+
+      if (newStatus === 'Paused' && task.isTimerRunning) {
+        this.taskService.toggleTimer(task.id!).subscribe({
+          next: (updatedTask) => {
+            Object.assign(task, updatedTask);
+            task.status = newStatus;
+            this.stopVisualTimer(task.id!);
+            this.taskService.updateTask(task).subscribe({
+              next: refresh,
+              error: () => handleError('Error al actualizar tarea')
+            });
+          },
+          error: () => handleError('Error al pausar temporizador')
+        });
+      } else if (newStatus === 'InProgress' && !task.isTimerRunning) {
+        this.taskService.toggleTimer(task.id!).subscribe({
+          next: (updatedTask) => {
+            Object.assign(task, updatedTask);
+            task.status = newStatus;
+            this.startVisualTimer(task);
+            this.taskService.updateTask(task).subscribe({
+              next: refresh,
+              error: () => handleError('Error al actualizar tarea')
+            });
+          },
+          error: () => handleError('Error al iniciar temporizador')
+        });
+      } else if (newStatus === 'Done' && task.isTimerRunning) {
+        this.taskService.toggleTimer(task.id!).subscribe({
+          next: (updatedTask) => {
+            Object.assign(task, updatedTask);
+            task.status = newStatus;
+            this.stopVisualTimer(task.id!);
+            this.taskService.updateTask(task).subscribe({
+              next: refresh,
+              error: () => handleError('Error al actualizar tarea')
+            });
+          },
+          error: () => handleError('Error al detener temporizador')
+        });
+      } else {
+        this.taskService.updateTask(task).subscribe({
+          next: refresh,
+          error: () => handleError('Error al actualizar tarea')
+        });
+      }
+    }
+  }
+
 
 
 
